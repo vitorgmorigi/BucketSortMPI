@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <mpi.h>
 
 #define RAND_MAX 99
 #define NARRAY 100  /* array size */
@@ -68,7 +69,7 @@ void BucketSort(int arr[])
 
     /* check what's in each bucket */
     printf("--------------\n");
-    printf("Buckets after sorted\n");
+    printf("Buckets depois de ordenados\n");
     for(i = 0; i < NBUCKET; i++)
     {
         printf("Bucket[\"%d\"] : ", i);
@@ -197,17 +198,52 @@ void gerarVetor(){
 
 }
 
-int main(void)
+int main(int argc, char ** argv)
 {
+    int rank, nprocs;
+    MPI_Status status;
+
     gerarVetor();
 
-    printf("Initial array\n");
+    printf("Vetor inicial\n");
     print(array);
     printf("------------\n");
 
-    BucketSort(array);
+    printf("Iniciando MPI...\n");
+
+	if(MPI_Init(NULL, NULL) != MPI_SUCCESS){
+		fprintf(stderr, "Nao foi possivel iniciar o MPI\n");
+		return -1;
+	}
+
+    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	printf ("Inicializando troca de mensagens...\n\n");
+
+	printf("Numero de processos: %d\n", nprocs);
+	printf("Processo atual: %d\n", rank);
+
+
+    if(rank == 0){ // Processo MESTRE
+        int i;
+        for(i = 0; i < NBUCKET; i++) {
+            MPI_Send(&array, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+        }
+	} else { // Processo ESCRAVO
+		int i;
+		for(i = 0; i < NBUCKET; i++) {
+            printf("Processo %d executando\n", rank);
+            BucketSort(array);
+			MPI_Recv(&array, 1, MPI_INT, i, 0, MPI_COMM_WORLD, &status);
+		}
+	}
+
+    printf("Finalizando MPI...");
+    MPI_Finalize();
+
     printf("------------\n");
-    printf("Sorted array\n");
+    printf("Vetor ordenado\n");
     print(array);
+
     return 0;
 }
