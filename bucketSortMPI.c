@@ -30,6 +30,7 @@ int array[NARRAY];
 void BucketSort(int arr[])
 {
     int i,j;
+
     struct Node **buckets;
 
     /* Aloca memória para os buckets */
@@ -215,6 +216,7 @@ int main(int argc, char ** argv)
 		fprintf(stderr, "Nao foi possivel iniciar o MPI\n");
 		return -1;
 	}
+	double startTime = MPI_Wtime();
 
     MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -228,7 +230,7 @@ int main(int argc, char ** argv)
 
     if(rank == 0){ // Processo MESTRE
         int i;
-        for(i = 0; i < NBUCKET; i++) {
+        for(i = 0; i < nprocs; i++) {
             MPI_Send(&array, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
         }
 	} else { // Processo ESCRAVO
@@ -236,16 +238,22 @@ int main(int argc, char ** argv)
 		for(i = 0; i < NBUCKET; i++) {
             printf("Processo %d executando\n", rank);
             BucketSort(array);
-			MPI_Recv(&array, 1, MPI_INT, i, 0, MPI_COMM_WORLD, &status);
+			MPI_Recv(&array, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
 		}
 	}
+
+	double endTime = MPI_Wtime();
 
     printf("Finalizando MPI...");
     MPI_Finalize();
 
+    printf("\nTime elapsed: %f secods\n", endTime - startTime);
+
     printf("------------\n");
     printf("Vetor ordenado\n");
     print(array);
+
+
 
     return 0;
 }
