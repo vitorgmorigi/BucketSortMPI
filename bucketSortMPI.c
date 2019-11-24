@@ -10,9 +10,9 @@
 #include <mpi.h>
 
 #define RAND_MAX 99
-#define NARRAY 100  /* array size */
-#define NBUCKET 10 /* bucket size */
-#define INTERVAL 10 /* bucket range */
+#define NARRAY 100  /* Tamanho do vetor */
+#define NBUCKET 10 /* Numero de buckets */
+#define INTERVAL 10 /* Delimitador de um bucket e outro */
 
 struct Node
 {
@@ -32,17 +32,17 @@ void BucketSort(int arr[])
     int i,j;
     struct Node **buckets;
 
-    /* allocate memory for array of pointers to the buckets */
+    /* Aloca memória para os buckets */
     buckets = (struct Node **)malloc(sizeof(struct Node*) * NBUCKET);
 
-    /* initialize pointers to the buckets */
+    /* Inicializa ponteiros para os buckets */
     for(i = 0; i < NBUCKET; ++i)
     {
         buckets[i] = NULL;
     }
 
-    /* put items into the buckets */
-    /* creates a link list in each bucket slot */
+    /* Povoa os buckets */
+    /* Cria uma lista encadeada em cada slot de bucket */
     for(i = 0; i < NARRAY; ++i)
     {
         struct Node *current;
@@ -53,7 +53,7 @@ void BucketSort(int arr[])
         buckets[pos] = current;
     }
 
-    /* check what's in each bucket */
+    /* Imprime na tela o que tem em cada bucket */
     for(i = 0; i < NBUCKET; i++)
     {
         printf("Bucket[\"%d\"] : ", i);
@@ -61,13 +61,13 @@ void BucketSort(int arr[])
         printf("\n");
     }
 
-    /* sorting bucket using Insertion Sort */
+    /* Ordena cada bucket usando Insertion Sort */
     for(i = 0; i < NBUCKET; ++i)
     {
         buckets[i] = InsertionSort(buckets[i]);
     }
 
-    /* check what's in each bucket */
+    /* Imprime os buckets na tela após estarem ordenados */
     printf("--------------\n");
     printf("Buckets depois de ordenados\n");
     for(i = 0; i < NBUCKET; i++)
@@ -77,7 +77,7 @@ void BucketSort(int arr[])
         printf("\n");
     }
 
-    /* put items back to original array */
+    /* Coloca itens de volta a posição original */
     for(j =0, i = 0; i < NBUCKET; ++i)
     {
         struct Node *node;
@@ -85,14 +85,14 @@ void BucketSort(int arr[])
         while(node)
         {
 
-            // precondition for avoiding out of bounds by the array
+            // Pré-condição para evitar estouro de tamanho do vetor
             assert(j < NARRAY);
             arr[j++] = node->data;
             node = node->next;
         }
     }
 
-    /* free memory */
+    /* Libera memória */
     for(i = 0; i < NBUCKET; ++i)
     {
         struct Node *node;
@@ -113,7 +113,7 @@ void BucketSort(int arr[])
 struct Node *InsertionSort(struct Node *list)
 {
     struct Node *k,*nodeList;
-    /* need at least two items to sort */
+    /* É necessário pelo menos dois itens para ordenar */
     if(list == NULL || list->next == NULL)
     {
         return list;
@@ -121,34 +121,34 @@ struct Node *InsertionSort(struct Node *list)
 
     nodeList = list;
     k = list->next;
-    nodeList->next = NULL; /* 1st node is new list */
+    nodeList->next = NULL; /* 1º nó é uma nova lista */
     while(k != NULL)
     {
         struct Node *ptr;
-        /* check if insert before first */
+        /* Verifica se insire antes da primeira */
         if(nodeList->data > k->data)
         {
             struct Node *tmp;
             tmp = k;
-            k = k->next; // important for the while
+            k = k->next;
             tmp->next = nodeList;
             nodeList = tmp;
             continue;
         }
 
-        // from begin up to end
-        // finds [i] > [i+1]
+        // do começo ao fim
+        // acha [i] > [i+1]
         for(ptr = nodeList; ptr->next != NULL; ptr = ptr->next)
         {
             if(ptr->next->data > k->data) break;
         }
 
-        // if found (above)
+        // se encontrado (acima)
         if(ptr->next != NULL)
         {
             struct Node *tmp;
             tmp = k;
-            k = k->next; // important for the while
+            k = k->next;
             tmp->next = ptr->next;
             ptr->next = tmp;
             continue;
@@ -156,7 +156,7 @@ struct Node *InsertionSort(struct Node *list)
         else
         {
             ptr->next = k;
-            k = k->next; // important for the while
+            k = k->next;
             ptr->next->next = NULL;
             continue;
         }
@@ -211,7 +211,7 @@ int main(int argc, char ** argv)
 
     printf("Iniciando MPI...\n");
 
-	if(MPI_Init(NULL, NULL) != MPI_SUCCESS){
+	if(MPI_Init(&argc, &argv) != MPI_SUCCESS){
 		fprintf(stderr, "Nao foi possivel iniciar o MPI\n");
 		return -1;
 	}
@@ -222,6 +222,8 @@ int main(int argc, char ** argv)
 
 	printf("Numero de processos: %d\n", nprocs);
 	printf("Processo atual: %d\n", rank);
+
+	//printf("Numero de processos: %d", nprocs);
 
 
     if(rank == 0){ // Processo MESTRE
